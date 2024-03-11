@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+	.parent-container {
+		display: grid;
+		place-items: center;
+	  }
+	body {background-color: lightblue; font-family: Arial}
+	h5	{text-align: right;}
+</style>
+
+</head>
+
+<body style='margin-top:20; margin-left:20; margin-right:20; '>
+
+<h1> <b>WORD SHUFFLER GAME</b> </h1>
+
+<!-- Main Component of the game -->
+<form method="post" id="gameForm">
+	{% csrf_token %}
+	<label for="Definition">Definition: {{meaning}}<span id="definition"></span></label> <br>
+	<label for="Shuffled">Shuffled Word: {{shuffled_word}}<span id="shuffled_word"></span></label><br>
+	<label for="UserInput">Original Word:</label>
+	<input type="text" id="UserInput" name="UserInput">
+	<button type="submit" id="submitButton" onclick="handleSubmit()">Submit</button><br>
+	<label for="output" id="output">Result: {{output}}<span id="result"></span></label>
+</form>
+
+<br>
+<br>
+
+<script>
+
+	// Function to check if the userinput is correct
+	function handleSubmit() {
+		event.preventDefault();
+
+		// Get the input value
+		var inputValue = document.getElementById('UserInput').value.toUpperCase();
+		var originalInput ="{{random_word}}";
+
+		// Compare the input value with the shuffled word
+		if (originalInput === inputValue) {
+			// Display output if they  match
+			document.getElementById('result').textContent = "You are correct!";
+		} else {
+			// Display output if they don't match
+			document.getElementById('result').textContent = "You are wrong! The correct answer is " + originalInput + ".";
+		}
+		
+		//Hide the 'Submit' button
+		document.getElementById('submitButton').style.display = 'none';
+		
+		// ##########To check again this line of code  vvvvv
+		// Send the userinput to the server using AJAX
+		var formData = new FormData();
+		formData.append('UserInput', inputValue);
+
+		fetch("{% url 'store_input' %}", {
+			method: 'POST',
+			headers: {
+				'X-CSRFToken': '{{ csrf_token }}'
+			},
+			body: formData	
+		})
+		.then(response => {
+			if (response.ok) {
+				//If response is successful
+				console.log('Input stored successfully');
+			} else {
+				//If response is not successful
+				console.log('Failed to store input');
+			}
+		})
+		.catch(error => {
+			//Other error
+			console.error('Error occured: ', error)
+		});
+	}
+		// ##########To check again this line of code  ^^^^^^^^^^
+
+	// Function to randomly select a word and definition
+	function getRandomWord() {
+		fetch("/shuffleword/")
+			.then(response => response.json())
+			.then(data => {
+				document.getElementById('shuffled_word').textContent = data.shuffled_word;
+				document.getElementById('definition').textContent = data.definition;
+				document.getElementById('UserInput').value = "";
+				document.getElementById('result').textContent = "";
+				document.getElementById('randomWordForm').reset();
+			})
+			.catch(error => {
+					console.error('Error:', error);
+			});
+}
+document.addEventListener('DOMContentLoaded', function() {
+	document.getElementById('shufflerForm').addEventListener('submit', handleSubmit);
+	document.getElementById('shufflerForm').addEventListener('reset', getRandomWord);
+});
+</script>	
+
+<!-- Button to randomly select another word and definition -->
+<form id="randomWordForm" method="post" action="{% url 'shuffleword' %}">
+    {% csrf_token %}
+    <button onclick="getRandomWord">Guess Another Word</button>
+</form>
+
+<br>
+
+<!-- Button to go to the homepage -->
+<button type="button" onclick="window.location.href='http://18.217.84.31:8200/homepage';">Home</button>
+
+<style>
+   #developer-info {
+      position: fixed;
+      bottom: 50px;
+      left: 10px;
+      font-size: 16px;
+      text-align: left;
+      padding: 5px'
+   }
+
+</style>
+
+<div id="developer-info">
+    <p style="margin: 0;"><b>Developed By: Mark Eliezer Arnoco </b> || Version: 2.01 || Last Update: January 10, 2024 </p>
+
+</body>
+</html>	
